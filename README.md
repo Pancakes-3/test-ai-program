@@ -6,6 +6,7 @@ A tiny, fully local chatbot inspired by ChatGPT. It uses only Python's standard 
 - Python 3 (standard library only; no extra packages needed)
 
 ## Running the chat
+Run SimpleAI from a terminal so the window stays open for interaction:
 ```bash
 python main.py
 ```
@@ -15,7 +16,8 @@ On startup you'll see:
 Welcome to SimpleAI. Type 'quit' to exit, 'help' for options.
 ```
 
-Then type messages and read the replies.
+Then type messages and read the replies. If you accidentally start it in a way that immediately closes the window, launch it from
+an open terminal instead so you can see the prompts (the program will now pause on exit when it detects an immediate close).
 
 ## Commands
 - `help` – show available commands.

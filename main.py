@@ -30,7 +30,11 @@ def main() -> None:
         try:
             user_text = input("You: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nGoodbye!")
+            print("\nGoodbye! (press Enter to close)")
+            try:
+                input()
+            except Exception:
+                pass
             break
 
         if not user_text:

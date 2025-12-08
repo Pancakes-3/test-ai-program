@@ -27,6 +27,7 @@ def main() -> None:
     brain = Brain(memory)
 
     print("Welcome to SimpleAI. Type 'quit' to exit, 'help' for options.")
+    print(f"Memory file: {memory.memory_path}")
 
     def pause_if_interactive(message: str) -> None:
         """Wait for Enter when stdin is a TTY to avoid instant window closing."""

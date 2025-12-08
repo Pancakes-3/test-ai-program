@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from datetime import datetime
+import sys
+import traceback
 from brain import Brain
 from memory import MemoryManager
 from config import BOT_NAME
@@ -26,15 +28,20 @@ def main() -> None:
 
     print("Welcome to SimpleAI. Type 'quit' to exit, 'help' for options.")
 
+    def pause_if_interactive(message: str) -> None:
+        """Wait for Enter when stdin is a TTY to avoid instant window closing."""
+        if sys.stdin is not None and sys.stdin.isatty():
+            try:
+                input(message)
+            except Exception:
+                pass
+
     while True:
         try:
             user_text = input("You: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\nGoodbye! (press Enter to close)")
-            try:
-                input()
-            except Exception:
-                pass
+            print("\nGoodbye!")
+            pause_if_interactive("Press Enter to close...")
             break
 
         if not user_text:
@@ -43,6 +50,7 @@ def main() -> None:
 
         if lower_text == "quit":
             print("Goodbye!")
+            pause_if_interactive("Press Enter to close...")
             break
         if lower_text == "help":
             print_help()
@@ -61,4 +69,13 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print("An unexpected error occurred. See details below and press Enter to close if needed.")
+        traceback.print_exc()
+        if sys.stdin is not None and sys.stdin.isatty():
+            try:
+                input("Press Enter to close...")
+            except Exception:
+                pass

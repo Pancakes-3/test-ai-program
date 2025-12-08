@@ -1,0 +1,36 @@
+# SimpleAI
+
+A tiny, fully local chatbot inspired by ChatGPT. It uses only Python's standard library, stores every conversation turn to disk, and reuses past chats to sound slightly smarter over time.
+
+## Requirements
+- Python 3 (standard library only; no extra packages needed)
+
+## Running the chat
+```bash
+python main.py
+```
+
+On startup you'll see:
+```
+Welcome to SimpleAI. Type 'quit' to exit, 'help' for options.
+```
+
+Then type messages and read the replies.
+
+## Commands
+- `help` – show available commands.
+- `stats` – print basic memory stats (total turns, distinct user messages, first/last timestamps).
+- `quit` – exit the chat.
+- `teach: when I say "X", you reply with "Y"` – teach a custom reply. The bot will reuse it when you later say something similar to `X`.
+
+## How it works
+- **Memory**: Every turn is appended to `data/memory.jsonl` (JSON Lines). Each line contains `timestamp`, `user`, and `bot` fields. The file and `data/` folder are created automatically if missing.
+- **Brain**: Incoming messages are tokenized and compared to past user messages using a simple Jaccard similarity. If a close match is found, the previous reply is reused with a short preface. Otherwise, keyword rules handle greetings, farewells, and basic questions. Anything unknown gets a generic but friendly response.
+- **Teaching**: You can teach explicit mappings with the `teach:` prefix. These are stored in memory alongside normal turns and loaded on startup.
+
+## Limitations
+- This is a toy chatbot, not a real language model.
+- Understanding is keyword/similarity-based; replies may be repetitive or off-target.
+- Memory grows without bounds; consider cleaning `data/memory.jsonl` if it gets large.
+
+Enjoy chatting with your local SimpleAI!

@@ -24,3 +24,11 @@ SIMILARITY_THRESHOLD = 0.3
 # Teach mode settings
 TEACH_PREFIX = "teach:"
 TEACH_TEMPLATE = "when i say \"{trigger}\", you reply with \"{reply}\""
+
+# Default lightweight knowledge so the bot starts with a few helpful answers.
+DEFAULT_KNOWLEDGE: list[tuple[str, str]] = [
+    ("what is your name", f"I'm {BOT_NAME}, your local Python chat buddy."),
+    ("who created you", "I was built as a simple local Python program that learns from our chats."),
+    ("what can you do", "I can chat, remember things you teach me, recall past talks, and solve small math problems offline."),
+    ("help", "You can say hello, ask questions, or teach me new replies by telling me to remember or learn something."),
+]

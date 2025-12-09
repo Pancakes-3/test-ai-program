@@ -29,7 +29,7 @@ an open terminal instead so you can see the prompts (the program will now pause 
 
 ## How it works
 - **Memory**: Every turn is appended to a JSON Lines file named `memory.jsonl`. The program tries a few storage locations in order: a `data/` folder next to the code, a folder you provide via `SIMPLEAI_DATA_DIR`, and finally a per-user directory at `~/.simpleai` so that permission errors don't crash the app. Each line contains `timestamp`, `user`, and `bot` fields. The chosen folder and file are created automatically if missing and writable.
-- **Brain**: Incoming messages are tokenized and compared to past user messages using a simple Jaccard similarity. If a close match is found, the previous reply is reused with a short preface. Otherwise, keyword rules handle greetings, farewells, and basic questions. A tiny built-in knowledge base plus flexible "remember/learn" phrasing make it feel less rigid, and it can solve small arithmetic questions locally.
+- **Brain**: Incoming messages are tokenized and compared to past user messages using a simple Jaccard similarity. If a close match is found, the previous reply is reused with a short preface. Otherwise, keyword rules handle greetings, farewells, and basic questions. A tiny built-in knowledge base plus flexible "remember/learn" phrasing make it feel less rigid, it will restate remembered facts when you ask about them, and it can solve small arithmetic questions locally.
 - **Teaching**: You can teach explicit mappings with the `teach:` prefix. These are stored in memory alongside normal turns and loaded on startup.
 
 ## Limitations

@@ -31,6 +31,7 @@ class Brain:
             for m in memory_manager.load_all()
         ]
         self.taught_replies: Dict[str, str] = self._load_teachings(self.memories)
+        self.knowledge_facts: Dict[str, str] = self._load_facts(self.memories)
         self._seed_default_knowledge()
 
     def _seed_default_knowledge(self) -> None:
@@ -46,6 +47,15 @@ class Brain:
             if trigger and reply:
                 teachings[trigger] = reply
         return teachings
+
+    def _load_facts(self, memories: List[MemoryEntry]) -> Dict[str, str]:
+        """Restore remembered facts from prior learning intents."""
+        facts: Dict[str, str] = {}
+        for mem in memories:
+            trigger, fact, _ = self._extract_fact(mem.user)
+            if trigger and fact:
+                facts[trigger] = fact
+        return facts
 
     def _parse_teach(self, text: str) -> Tuple[Optional[str], Optional[str]]:
         """Parse teaching instructions of the form 'teach: when I say "X", you reply with "Y"'."""
@@ -68,6 +78,9 @@ class Brain:
         trigger, reply = self._parse_teach(user_text)
         if trigger and reply:
             self.taught_replies[trigger] = reply
+        fact_trigger, fact_value, _ = self._extract_fact(user_text)
+        if fact_trigger and fact_value:
+            self.knowledge_facts[fact_trigger] = fact_value
 
     def generate_reply(self, message: str) -> str:
         """Generate a reply using teaching, memory similarity, and simple rules."""
@@ -83,6 +96,10 @@ class Brain:
         taught_response = self._lookup_taught_reply(message)
         if taught_response:
             return taught_response
+
+        fact_response = self._lookup_fact_answer(message)
+        if fact_response:
+            return fact_response
 
         math_answer = self._try_math(message)
         if math_answer:
@@ -101,24 +118,13 @@ class Brain:
         if not any(word in lowered for word in learning_words):
             return None
 
-        # Patterns like "remember that cats are playful" -> trigger "cats" reply "Cats are playful."
-        match_is = re.search(r"remember(?: that)?\s+(.+?)\s+(is|are|means)\s+(.+)", lowered)
-        if match_is:
-            trigger = match_is.group(1).strip()
-            meaning = match_is.group(3).strip()
-            reply = meaning[0].upper() + meaning[1:] if meaning else meaning
-            self.taught_replies[trigger] = reply
-            return f"Okay, I'll remember that {trigger} is {reply}."
-
-        # Patterns like "remember this: ..." -> echo back later.
-        match_this = re.search(r"remember this[:\-]?\s*(.+)", message, flags=re.IGNORECASE)
-        if match_this:
-            fact = match_this.group(1).strip()
-            if fact:
-                trigger = fact
-                reply = f"You told me: {fact}"
-                self.taught_replies[trigger] = reply
-                return "Noted! I'll keep that in mind."
+        trigger, fact, kind = self._extract_fact(message)
+        if trigger and fact:
+            self.taught_replies.setdefault(trigger, fact)
+            self.knowledge_facts[trigger] = fact
+            if kind == "is_pattern":
+                return f"Okay, I'll remember that {trigger} is {fact}."
+            return "Noted! I'll keep that in mind."
 
         # Patterns like "learn that when I say X you answer Y" without the teach prefix.
         match_when = re.search(r"when i say \"(.+?)\"[, ]+you (?:should )?reply with \"(.+?)\"", message, flags=re.IGNORECASE)
@@ -131,11 +137,62 @@ class Brain:
 
         return None
 
+    def _extract_fact(self, message: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
+        """Return (trigger, fact, kind) when a message teaches a fact."""
+        # Patterns like "remember that cats are playful" -> trigger "cats" fact "Cats are playful".
+        match_is = re.search(r"remember(?: that)?\s+(.+?)\s+(is|are|means)\s+(.+)", message, flags=re.IGNORECASE)
+        if match_is:
+            trigger = match_is.group(1).strip()
+            meaning = match_is.group(3).strip()
+            fact = meaning[0].upper() + meaning[1:] if meaning else meaning
+            return trigger, fact, "is_pattern"
+
+        # Patterns like "remember this: ..." -> store the whole fact for later recall.
+        match_this = re.search(r"remember this[:\-]?\s*(.+)", message, flags=re.IGNORECASE)
+        if match_this:
+            fact = match_this.group(1).strip()
+            trigger = fact
+            return trigger, fact, "verbatim"
+
+        return None, None, None
+
     def _lookup_taught_reply(self, message: str) -> Optional[str]:
         """Check for a manually taught response."""
         for trigger, reply in self.taught_replies.items():
             if jaccard_similarity(tokenize(trigger), tokenize(message)) >= 0.6:
                 return reply
+        return None
+
+    def _lookup_fact_answer(self, message: str) -> Optional[str]:
+        """Answer questions with remembered facts when possible."""
+        if not self.knowledge_facts:
+            return None
+
+        tokens = tokenize(message)
+        lowered = message.lower()
+
+        # Special casing for date/day questions to catch "today" facts.
+        if any(word in tokens for word in {"day", "date", "today"}):
+            for key in ("today", "date", "current day", "current date"):
+                if key in self.knowledge_facts:
+                    fact = self.knowledge_facts[key]
+                    return f"You told me that {key} is {fact}."
+
+        best_score = 0.0
+        best_trigger: Optional[str] = None
+        for trigger, fact in self.knowledge_facts.items():
+            trigger_tokens = tokenize(trigger)
+            score = jaccard_similarity(tokens, trigger_tokens)
+            shared_word = any(tok in trigger_tokens for tok in tokens)
+            substring_match = trigger.lower() in lowered or lowered in trigger.lower()
+            if score > best_score or (shared_word and score >= 0.25) or substring_match:
+                best_score = score
+                best_trigger = trigger
+
+        if best_trigger:
+            fact = self.knowledge_facts[best_trigger]
+            return f"You told me that {best_trigger} is {fact}."
+
         return None
 
     def _try_math(self, message: str) -> Optional[str]:

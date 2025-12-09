@@ -1,6 +1,8 @@
 """Entry point for the local terminal coding assistant."""
 from __future__ import annotations
 
+import os
+import platform
 from pathlib import Path
 from typing import Optional
 
@@ -55,12 +57,33 @@ def load_settings(config_path: Path) -> dict:
         "use_sklearn": False,
         "max_history": 20,
         "auto_run_code": False,
-        "memory_path": "memory.db",
+        "memory_path": str(default_memory_path()),
         "rich_output": RICH_AVAILABLE,
     }
     loaded = load_config(config_path)
     defaults.update(loaded)
     return defaults
+
+
+def default_memory_path() -> Path:
+    """Choose a user-writable default location for the memory database."""
+    system = platform.system().lower()
+    home = Path.home()
+    if system == "windows":  # pragma: no cover - platform specific
+        base_dir = Path(os.environ.get("APPDATA", home / "AppData" / "Roaming"))
+    elif system == "darwin":  # pragma: no cover - platform specific
+        base_dir = home / "Library" / "Application Support"
+    else:
+        base_dir = home / ".local" / "share"
+    return base_dir / "local_coding_assistant" / "memory.db"
+
+
+def resolve_memory_path(config_path: Path, configured_path: str) -> Path:
+    """Resolve a configured memory path relative to the config file location if needed."""
+    candidate = Path(configured_path)
+    if not candidate.is_absolute():
+        candidate = config_path.parent / candidate
+    return candidate
 
 
 def show_help(ui: TerminalUI) -> None:
@@ -83,16 +106,35 @@ def handle_run(ui: TerminalUI, last_code: Optional[str]) -> None:
 
 
 def main() -> None:
-    config = load_settings(Path("config.json"))
+    config_path = Path("config.json")
+    config = load_settings(config_path)
     ui = TerminalUI(config.get("rich_output", False))
     ui.info(WELCOME)
-    try:
-        memory = MemoryStore(Path(config.get("memory_path", "memory.db")))
-    except Exception as exc:  # pragma: no cover - defensive fallback
+    configured_path = resolve_memory_path(config_path, config.get("memory_path", str(default_memory_path())))
+    storage_paths = [configured_path]
+    home_fallback = default_memory_path()
+    if home_fallback != configured_path:
+        storage_paths.append(home_fallback)
+
+    memory = None
+    errors = []
+    for path in storage_paths:
+        try:
+            memory = MemoryStore(path)
+            if path != configured_path:
+                ui.output(
+                    "Primary memory location was not writable. Using fallback at\n"
+                    f"{path}"
+                )
+            break
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            errors.append((path, exc))
+
+    if memory is None:
         ui.output(
-            "Failed to open memory database; falling back to in-memory storage."
+            "Failed to open a persistent memory database; falling back to in-memory storage."
             " Future sessions will not retain history.\n"
-            f"Reason: {exc}"
+            + "\n".join(f"Path {p}: {err}" for p, err in errors)
         )
         memory = InMemoryStore()
     assistant = CodingAssistant(memory, auto_run_code=config.get("auto_run_code", False), max_history=config.get("max_history", 20))

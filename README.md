@@ -37,7 +37,7 @@ Type natural language questions or paste code. Use fenced code blocks (```) to m
 - `/quit` — Exit the assistant.
 
 ## Learning and Memory
-- Interactions are stored locally in `memory.db` (configurable in `config.json`). If the database cannot be opened (permissions, read-only filesystem, etc.), the assistant falls back to in-memory storage for the current session.
+- Interactions are stored locally in a SQLite database (configurable in `config.json`) with a user-writable default of `~/.local/share/local_coding_assistant/memory.db`. If the configured location cannot be opened (permissions, read-only filesystem, etc.), the assistant first tries a user-specific fallback path before using in-memory storage for the current session.
 - When you supply a correction via `/correct`, the assistant links it to the last interaction.
 - On new questions, it performs a similarity search over prior questions and surfaces helpful corrections or patterns.
 - No data leaves your machine.
@@ -47,7 +47,7 @@ Type natural language questions or paste code. Use fenced code blocks (```) to m
 - `use_sklearn` — Whether to use scikit-learn when available for TF-IDF.
 - `max_history` — Number of history items to show.
 - `auto_run_code` — Reserved for future auto-execution behavior.
-- `memory_path` — Location of the SQLite database.
+- `memory_path` — Location of the SQLite database. Relative paths are resolved next to `config.json`; if that location is not writable, the assistant falls back to a per-user data directory before using in-memory storage.
 - `rich_output` — Toggle Rich formatting.
 
 ## Limitations

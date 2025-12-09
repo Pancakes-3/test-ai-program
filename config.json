@@ -1,0 +1,7 @@
+{
+  "use_sklearn": true,
+  "max_history": 20,
+  "auto_run_code": false,
+  "memory_path": "memory.db",
+  "rich_output": true
+}

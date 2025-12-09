@@ -39,7 +39,11 @@ class CodingAssistant:
             answer_parts.append(f"```{plan.language}\n{plan.code}\n```")
         final_answer = "\n\n".join(part for part in answer_parts if part)
         blocks = extract_code_blocks(final_answer)
-        self.memory.store_interaction(question, final_answer, blocks)
+        try:
+            self.memory.store_interaction(question, final_answer, blocks)
+        except Exception:
+            # Persistence failures should not crash the REPL.
+            pass
         self.last_interaction = Interaction(question=question, answer=final_answer, code_blocks=blocks)
         return final_answer
 
@@ -47,13 +51,17 @@ class CodingAssistant:
         """Persist feedback linked to the last interaction."""
         if not self.last_interaction:
             return
-        self.memory.store_interaction(
-            question=self.last_interaction.question,
-            answer=self.last_interaction.answer,
-            code_blocks=self.last_interaction.code_blocks,
-            feedback="user correction",
-            correction=correction_text,
-        )
+        try:
+            self.memory.store_interaction(
+                question=self.last_interaction.question,
+                answer=self.last_interaction.answer,
+                code_blocks=self.last_interaction.code_blocks,
+                feedback="user correction",
+                correction=correction_text,
+            )
+        except Exception:
+            # Best-effort; if we cannot persist, at least keep the session alive.
+            pass
 
     def _plan_response(self, question: str, similar: List[tuple]) -> ResponsePlan:
         lowered = question.lower()

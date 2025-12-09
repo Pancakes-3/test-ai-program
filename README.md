@@ -37,7 +37,7 @@ Type natural language questions or paste code. Use fenced code blocks (```) to m
 - `/quit` — Exit the assistant.
 
 ## Learning and Memory
-- Interactions are stored locally in `memory.db` (configurable in `config.json`).
+- Interactions are stored locally in `memory.db` (configurable in `config.json`). If the database cannot be opened (permissions, read-only filesystem, etc.), the assistant falls back to in-memory storage for the current session.
 - When you supply a correction via `/correct`, the assistant links it to the last interaction.
 - On new questions, it performs a similarity search over prior questions and surfaces helpful corrections or patterns.
 - No data leaves your machine.

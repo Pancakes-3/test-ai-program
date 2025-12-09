@@ -17,7 +17,7 @@ except Exception:  # pragma: no cover - optional dependency
 
 from assistant_core import CodingAssistant
 from code_tools import extract_code_blocks, format_run_result, run_python
-from memory import MemoryStore, load_config
+from memory import InMemoryStore, MemoryStore, load_config
 
 
 WELCOME = """Welcome to the local coding assistant!\n"
@@ -86,7 +86,15 @@ def main() -> None:
     config = load_settings(Path("config.json"))
     ui = TerminalUI(config.get("rich_output", False))
     ui.info(WELCOME)
-    memory = MemoryStore(Path(config.get("memory_path", "memory.db")))
+    try:
+        memory = MemoryStore(Path(config.get("memory_path", "memory.db")))
+    except Exception as exc:  # pragma: no cover - defensive fallback
+        ui.output(
+            "Failed to open memory database; falling back to in-memory storage."
+            " Future sessions will not retain history.\n"
+            f"Reason: {exc}"
+        )
+        memory = InMemoryStore()
     assistant = CodingAssistant(memory, auto_run_code=config.get("auto_run_code", False), max_history=config.get("max_history", 20))
 
     last_code_block: Optional[str] = None
@@ -110,7 +118,11 @@ def main() -> None:
                 ui.output("Goodbye!")
                 break
             if command == "/history":
-                interactions = memory.recent(limit=config.get("max_history", 10))
+                try:
+                    interactions = memory.recent(limit=config.get("max_history", 10))
+                except Exception as exc:
+                    ui.output(f"Unable to read history: {exc}")
+                    continue
                 if not interactions:
                     ui.output("No history yet.")
                 else:

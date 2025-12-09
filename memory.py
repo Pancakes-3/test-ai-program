@@ -30,6 +30,7 @@ class MemoryStore:
         self._ensure_schema()
 
     def _ensure_schema(self) -> None:
+        """Initialize the SQLite schema if possible."""
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
@@ -112,3 +113,41 @@ def load_config(path: Path) -> dict:
         return json.loads(path.read_text())
     except Exception:
         return {}
+
+
+class InMemoryStore:
+    """Lightweight, non-persistent store used as a fallback when SQLite fails."""
+
+    def __init__(self):
+        self._items: List[Interaction] = []
+
+    def store_interaction(
+        self,
+        question: str,
+        answer: str,
+        code_blocks: List[CodeBlock],
+        feedback: Optional[str] = None,
+        correction: Optional[str] = None,
+    ) -> None:
+        self._items.append(
+            Interaction(
+                question=question,
+                answer=answer,
+                code_blocks=code_blocks,
+                feedback=feedback,
+                correction=correction,
+                created_at=time.time(),
+            )
+        )
+
+    def recent(self, limit: int = 10) -> List[Interaction]:
+        return list(reversed(self._items[-limit:]))
+
+    def find_similar(self, question: str, k: int = 5) -> List[Tuple[Interaction, float]]:
+        if not self._items:
+            return []
+        questions = [item.question for item in self._items]
+        space, model = build_vector_space(questions)
+        query_vector = transform_texts([question], model, space.vocabulary_)[0]
+        similar_items = top_k_similar(space, query_vector, k=k)
+        return [(self._items[item.index], item.score) for item in similar_items]

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Tag } from "@prisma/client";
+import { TAGS, parseTags } from "@/lib/tags";
 
 export default async function AdminPage({
   searchParams
@@ -75,7 +75,7 @@ export default async function AdminPage({
           </div>
         </div>
         <fieldset className="flex flex-wrap gap-4 text-sm">
-          {Object.values(Tag).map((tag) => (
+          {TAGS.map((tag) => (
             <label key={tag} className="flex items-center gap-2">
               <input type="checkbox" name="tags" value={tag} />
               {tag.replace("_", " ")}
@@ -127,9 +127,14 @@ export default async function AdminPage({
                 </div>
               </div>
               <fieldset className="mt-3 flex flex-wrap gap-3 text-xs">
-                {Object.values(Tag).map((tag) => (
+                {TAGS.map((tag) => (
                   <label key={`${user.id}-${tag}`} className="flex items-center gap-2">
-                    <input type="checkbox" name="tags" value={tag} defaultChecked={user.tags.includes(tag)} />
+                    <input
+                      type="checkbox"
+                      name="tags"
+                      value={tag}
+                      defaultChecked={parseTags(user.tags).includes(tag)}
+                    />
                     {tag.replace("_", " ")}
                   </label>
                 ))}

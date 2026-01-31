@@ -7,31 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  USER
-  MOD
-}
-
-enum Tag {
-  BREAKING_NEWS
-  CANDIDATE
-  PRESIDENT
-}
-
-enum MediaType {
-  image
-  video
-}
-
 model User {
   id                 String   @id @default(cuid())
   username           String   @unique
   displayName        String
   bio                String?  @default("")
   avatarUrl          String?  @default("")
-  role               Role     @default(USER)
-  tags               Tag[]    @default([])
+  role               String   @default("USER")
+  tags               String   @default("")
   passwordHash       String
   mustChangePassword Boolean  @default(false)
   createdAt          DateTime @default(now())
@@ -55,7 +38,7 @@ model Post {
 model Media {
   id        String    @id @default(cuid())
   postId    String
-  type      MediaType
+  type      String
   url       String
   mimeType  String
   width     Int?

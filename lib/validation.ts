@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ROLES, TAGS } from "@/lib/tags";
 
 export const loginSchema = z.object({
   username: z.string().min(3).max(30),
@@ -15,8 +16,8 @@ export const setupSchema = z.object({
 export const createUserSchema = z.object({
   username: z.string().min(3).max(30),
   displayName: z.string().min(2).max(50),
-  role: z.enum(["ADMIN", "USER", "MOD"]),
-  tags: z.array(z.enum(["BREAKING_NEWS", "CANDIDATE", "PRESIDENT"]))
+  role: z.enum(ROLES),
+  tags: z.array(z.enum(TAGS))
 });
 
 export const updateProfileSchema = z.object({

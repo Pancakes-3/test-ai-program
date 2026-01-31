@@ -1,5 +1,6 @@
-import { PrismaClient, Role, Tag } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { serializeTags } from "../lib/tags";
 
 const prisma = new PrismaClient();
 
@@ -12,8 +13,8 @@ async function main() {
     create: {
       username: "campadmin",
       displayName: "Camp Admin",
-      role: Role.ADMIN,
-      tags: [],
+      role: "ADMIN",
+      tags: "",
       passwordHash,
       mustChangePassword: false
     }
@@ -25,8 +26,8 @@ async function main() {
     create: {
       username: "president",
       displayName: "Current President",
-      role: Role.USER,
-      tags: [Tag.PRESIDENT, Tag.BREAKING_NEWS],
+      role: "USER",
+      tags: serializeTags(["PRESIDENT", "BREAKING_NEWS"]),
       passwordHash,
       mustChangePassword: true
     }
@@ -38,8 +39,8 @@ async function main() {
     create: {
       username: "candidate1",
       displayName: "Candidate Alex",
-      role: Role.USER,
-      tags: [Tag.CANDIDATE, Tag.BREAKING_NEWS],
+      role: "USER",
+      tags: serializeTags(["CANDIDATE", "BREAKING_NEWS"]),
       passwordHash,
       mustChangePassword: true
     }
@@ -51,8 +52,8 @@ async function main() {
     create: {
       username: "candidate2",
       displayName: "Candidate Morgan",
-      role: Role.USER,
-      tags: [Tag.CANDIDATE, Tag.BREAKING_NEWS],
+      role: "USER",
+      tags: serializeTags(["CANDIDATE", "BREAKING_NEWS"]),
       passwordHash,
       mustChangePassword: true
     }
@@ -66,8 +67,8 @@ async function main() {
         create: {
           username,
           displayName: username.charAt(0).toUpperCase() + username.slice(1),
-          role: Role.USER,
-          tags: [],
+          role: "USER",
+          tags: "",
           passwordHash,
           mustChangePassword: true
         }

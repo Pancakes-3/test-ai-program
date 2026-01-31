@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { Role } from "@prisma/client";
+import { parseTags, Role as AppRole } from "@/lib/tags";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 
@@ -11,7 +11,7 @@ export type AuthUser = {
   id: string;
   username: string;
   displayName: string;
-  role: Role;
+  role: AppRole;
   mustChangePassword: boolean;
   tags: string[];
 };
@@ -34,9 +34,9 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
-    role: user.role,
+    role: user.role as AppRole,
     mustChangePassword: user.mustChangePassword,
-    tags: user.tags
+    tags: parseTags(user.tags)
   };
 }
 
@@ -48,7 +48,7 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  if (user.role !== Role.ADMIN) throw new Error("Forbidden");
+  if (user.role !== "ADMIN") throw new Error("Forbidden");
   return user;
 }
 

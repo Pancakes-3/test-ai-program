@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createUserSchema } from "@/lib/validation";
-import { Tag } from "@prisma/client";
+import { serializeTags } from "@/lib/tags";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       username: parsed.data.username,
       displayName: parsed.data.displayName,
       role: parsed.data.role,
-      tags: parsed.data.tags as Tag[],
+      tags: serializeTags(parsed.data.tags),
       passwordHash,
       mustChangePassword
     }

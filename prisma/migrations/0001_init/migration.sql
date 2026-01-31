@@ -6,7 +6,7 @@ CREATE TABLE "User" (
     "bio" TEXT DEFAULT '',
     "avatarUrl" TEXT DEFAULT '',
     "role" TEXT NOT NULL DEFAULT 'USER',
-    "tags" TEXT NOT NULL DEFAULT '[]',
+    "tags" TEXT NOT NULL DEFAULT '',
     "passwordHash" TEXT NOT NULL,
     "mustChangePassword" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP

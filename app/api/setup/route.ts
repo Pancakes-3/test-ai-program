@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { setupSchema } from "@/lib/validation";
 import { hashPassword, createSession } from "@/lib/auth";
-import { Role } from "@prisma/client";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -19,7 +18,7 @@ export async function POST(request: Request) {
   if (parsed.data.setupKey !== process.env.SETUP_KEY) {
     return NextResponse.json({ error: "Invalid setup key." }, { status: 401 });
   }
-  const adminExists = await prisma.user.findFirst({ where: { role: Role.ADMIN } });
+  const adminExists = await prisma.user.findFirst({ where: { role: "ADMIN" } });
   if (adminExists) {
     return NextResponse.json({ error: "Admin already exists." }, { status: 400 });
   }
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
       username: parsed.data.username,
       displayName: parsed.data.displayName,
       passwordHash,
-      role: Role.ADMIN
+      role: "ADMIN"
     }
   });
   await createSession(user.id);

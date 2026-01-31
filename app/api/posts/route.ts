@@ -7,7 +7,7 @@ import { getMediaType, isValidMediaType } from "@/lib/media";
 import { saveFile } from "@/lib/upload";
 import { rateLimit } from "@/lib/rateLimit";
 import { getClientIp } from "@/lib/request";
-import { Tag } from "@prisma/client";
+import { tagToken } from "@/lib/tags";
 
 const PAGE_SIZE = 10;
 
@@ -30,15 +30,14 @@ export async function GET(request: Request) {
     whereClause = { authorId: { in: followingIds } };
   }
   if (feed === "breaking") {
-    whereClause = { author: { tags: { has: Tag.BREAKING_NEWS } } };
+    whereClause = { author: { tags: { contains: tagToken("BREAKING_NEWS") } } };
   }
   if (feed === "candidates") {
     whereClause = {
-      author: {
-        tags: {
-          hasSome: [Tag.CANDIDATE, Tag.PRESIDENT]
-        }
-      }
+      OR: [
+        { author: { tags: { contains: tagToken("CANDIDATE") } } },
+        { author: { tags: { contains: tagToken("PRESIDENT") } } }
+      ]
     };
   }
 

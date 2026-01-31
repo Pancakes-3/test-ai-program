@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser, hashPassword } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Tag } from "@prisma/client";
+import { serializeTags } from "@/lib/tags";
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
@@ -17,12 +17,12 @@ export async function POST(request: Request) {
 
   const data: {
     role?: string;
-    tags?: Tag[];
+    tags?: string;
     mustChangePassword?: boolean;
     passwordHash?: string;
   } = {
     role,
-    tags: tags as Tag[],
+    tags: serializeTags(tags),
     mustChangePassword
   };
 

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { serializeTags } from "../lib/tags";
+import { serializeTags } from "../lib/tags.js";
 
 const prisma = new PrismaClient();
 

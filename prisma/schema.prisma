@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  displayName        String
+  bio                String?  @default("")
+  avatarUrl          String?  @default("")
+  role               String   @default("USER")
+  tags               String   @default("")
+  passwordHash       String
+  mustChangePassword Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  posts              Post[]
+  following          Follow[] @relation("following")
+  followers          Follow[] @relation("followers")
+  likes              Like[]
+  sessions           Session[]
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  authorId  String
+  text      String?
+  createdAt DateTime @default(now())
+  author    User     @relation(fields: [authorId], references: [id])
+  media     Media[]
+  likes     Like[]
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  postId    String
+  type      String
+  url       String
+  mimeType  String
+  width     Int?
+  height    Int?
+  duration  Int?
+  createdAt DateTime  @default(now())
+  post      Post      @relation(fields: [postId], references: [id])
+}
+
+model Follow {
+  followerId String
+  followingId String
+  createdAt DateTime @default(now())
+  follower User @relation("following", fields: [followerId], references: [id])
+  following User @relation("followers", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
